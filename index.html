@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distribuição de Área de Baldio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; background: #f7f9f5; min-height: 100vh; }
+    header { background: #2d5a27; color: white; padding: 20px 24px; }
+    header h1 { font-size: 1.3rem; }
+    header p { font-size: 0.75rem; opacity: 0.75; margin-top: 4px; font-family: sans-serif; }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px 16px; }
+    .card { background: white; border: 1px solid #d0d8cc; border-radius: 8px; margin-bottom: 18px; overflow: hidden; box-shadow: 0 2px 8px rgba(45,90,39,0.08); }
+    .card-title { background: #eef3ec; border-bottom: 1px solid #d0d8cc; padding: 12px 18px; font-weight: bold; color: #2d5a27; font-size: 0.95rem; }
+    .card-body { padding: 18px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    label { display: block; font-family: sans-serif; font-size: 0.72rem; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+    input, select { width: 100%; border: 1.5px solid #d0d8cc; border-radius: 5px; padding: 8px 10px; font-family: sans-serif; font-size: 0.9rem; background: #fafaf8; outline: none; }
+    .hint { font-family: sans-serif; font-size: 0.72rem; color: #999; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 0.82rem; }
+    th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #555; background: #eef3ec; }
+    td { padding: 6px 6px; border-bottom: 1px solid #eee; }
+    td input { width: 60px; text-align: center; padding: 5px 4px; }
+    .cn-cell { font-weight: 700; color: #2d5a27; text-align: right; white-space: nowrap; }
+    .btn-remove { background: none; border: 1px solid #e0c0c0; border-radius: 4px; color: #c0392b; cursor: pointer; padding: 3px 8px; font-size: 0.8rem; }
+    .btn-add { background: #eef3ec; color: #2d5a27; border: 1.5px solid #4a8c3f; border-radius: 5px; padding: 8px 16px; font-family: sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; margin-top: 12px; }
+    .btn-calc { width: 100%; background: #2d5a27; color: white; border: none; border-radius: 6px; padding: 13px; font-size: 1rem; font-family: Georgia, serif; font-weight: bold; cursor: pointer; margin-top: 4px; }
+    .btn-back { background: white; color: #2d5a27; border: 1.5px solid #2d5a27; border-radius: 5px; padding: 9px 20px; font-family: sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; margin-top: 14px; }
+    .summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .summary-box { background: white; border: 1px solid #d0d8cc; border-radius: 8px; padding: 14px 16px; text-align: center; box-shadow: 0 2px 6px rgba(45,90,39,0.08); }
+    .summary-val { font-size: 1.4rem; font-weight: bold; color: #2d5a27; }
+    .summary-lbl { font-family: sans-serif; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #777; margin-top: 3px; }
+    .alert { background: #fff8e1; border: 1px solid #f0c040; border-radius: 6px; padding: 11px 16px; font-family: sans-serif; font-size: 0.83rem; color: #7a5c00; margin-bottom: 16px; }
+    .result-table th { background: #2d5a27; color: white; padding: 9px 12px; }
+    .result-table td { padding: 9px 12px; }
+    .result-table tr:nth-child(even) td { background: #f7fbf6; }
+    .bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .bar { height: 10px; background: #2d5a27; border-radius: 5px; }
+    .bar-pct { font-size: 0.75rem; color: #888; }
+    .nota { margin-top: 14px; padding: 13px 16px; background: #eef3ec; border-radius: 6px; font-family: sans-serif; font-size: 0.75rem; color: #555; line-height: 1.6; }
+    .overflow-x { overflow-x: auto; }
+    #ecrã-resultado { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ECRÃ INTRODUÇÃO -->
+<div id="ecrã-intro">
+  <header>
+    <h1>🌿 Distribuição de Área de Baldio</h1>
+    <p>Cálculo proporcional por efetivo · Lei n.º 75/2017 · PEPAC/PAC</p>
+  </header>
+  <div class="container">
+
+    <div class="card">
+      <div class="card-title">1. Configuração do Baldio</div>
+      <div class="card-body">
+        <div class="grid2">
+          <div>
+            <label>Designação do Baldio</label>
+            <input id="nome-baldio" type="text" placeholder="Ex: Baldio de Frades" />
+          </div>
+          <div>
+            <label>Área Total Disponível (ha)</label>
+            <input id="area-total" type="number" placeholder="Ex: 450" min="0" step="0.01" />
+          </div>
+          <div>
+            <label>Encabeçamento Máx. (CN/ha)</label>
+            <input id="enc-max" type="number" value="0.5" min="0.1" max="0.75" step="0.05" />
+            <div class="hint">Máx. legal: 0,750 · Mín. PAC: 0,200</div>
+          </div>
+          <div>
+            <label>Critério de Distribuição</label>
+            <select id="criterio">
+              <option value="proporcional">Proporcional ao efetivo (CN)</option>
+              <option value="igual">Área igual por comparte</option>
+              <option value="max-cn">Máximo por CN/ha definido</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Fatores de Conversão CN (PEPAC Continente)</div>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>Espécie</th><th>Fator CN</th></tr></thead>
+          <tbody>
+            <tr><td>Bovino adulto (≥2 anos)</td><td><b style="color:#2d5a27">1,00</b></td></tr>
+            <tr><td>Bovino jovem (6m–2 anos)</td><td><b style="color:#2d5a27">0,60</b></td></tr>
+            <tr><td>Equídeo adulto</td><td><b style="color:#2d5a27">1,00</b></td></tr>
+            <tr><td>Ovino / Caprino adulto</td><td><b style="color:#2d5a27">0,15</b></td></tr>
+            <tr><td>Suíno adulto</td><td><b style="color:#2d5a27">0,30</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Compartes e Efetivos</div>
+      <div class="card-body">
+        <div class="overflow-x">
+          <table id="tabela-compartes">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Bov. Ad.</th>
+                <th>Bov. Jov.</th>
+                <th>Equíd.</th>
+                <th>Ovinos</th>
+                <th>Caprin.</th>
+                <th>Suínos</th>
+                <th>CN</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-compartes"></tbody>
+          </table>
+        </div>
+        <button class="btn-add" onclick="addComparte()">+ Adicionar Comparte</button>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="calcular()">⚖️ Calcular Distribuição</button>
+  </div>
+</div>
+
+<!-- ECRÃ RESULTADO -->
+<div id="ecrã-resultado">
+  <header>
+    <h1 id="titulo-resultado">✅ Resultado</h1>
+    <p>Lei n.º 75/2017 · Princípio de igualdade de tratamento (art.º 34.º)</p>
+  </header>
+  <div class="container">
+    <div class="summary">
+      <div class="summary-box"><div class="summary-val" id="r-area"></div><div class="summary-lbl">Área Total</div></div>
+      <div class="summary-box"><div class="summary-val" id="r-cn"></div><div class="summary-lbl">Total CN</div></div>
+      <div class="summary-box"><div class="summary-val" id="r-dist"></div><div class="summary-lbl">Área Distribuída</div></div>
+    </div>
+    <div class="alert" id="alerta-excesso" style="display:none">
+      ⚠️ <strong>Atenção:</strong> O efetivo total excede a capacidade do baldio. A área foi ajustada proporcionalmente para respeitar o encabeçamento máximo definido.
+    </div>
+    <div class="card">
+      <div class="card-body overflow-x">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Comparte</th><th>CN Total</th>
+              <th>Área (ha)</th><th>CN/ha</th><th>Distribuição</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-resultado"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="nota">
+      <strong>Nota legal:</strong> Esta distribuição respeita o princípio de igualdade de tratamento (art.º 34.º, Lei n.º 75/2017) e os limites de encabeçamento do PEPAC Continente (0,200–0,750 CN/ha). A atribuição definitiva carece de deliberação da Assembleia de Compartes.
+    </div>
+    <button class="btn-back" onclick="voltar()">← Editar Dados</button>
+  </div>
+</div>
+
+<script>
+  const FATORES = { bov_ad: 1.0, bov_jov: 0.6, equid: 1.0, ovinos: 0.15, caprinos: 0.15, suinos: 0.3 };
+  let compartes = [];
+  let nextId = 1;
+
+  function calcCN(c) {
+    return Object.keys(FATORES).reduce((s, k) => s + (parseFloat(c[k]) || 0) * FATORES[k], 0);
+  }
+
+  function addComparte() {
+    const id = nextId++;
+    compartes.push({ id, nome: '', bov_ad: 0, bov_jov: 0, equid: 0, ovinos: 0, caprinos: 0, suinos: 0 });
+    renderCompartes();
+  }
+
+  function removeComparte(id) {
+    compartes = compartes.filter(c => c.id !== id);
+    renderCompartes();
+  }
+
+  function updateComparte(id, field, value) {
+    const c = compartes.find(c => c.id === id);
+    if (c) { c[field] = value; renderCN(id); }
+  }
+
+  function renderCN(id) {
+    const c = compartes.find(c => c.id === id);
+    if (c) document.getElementById('cn-' + id).textContent = calcCN(c).toFixed(2);
+  }
+
+  function renderCompartes() {
+    const tbody = document.getElementById('tbody-compartes');
+    tbody.innerHTML = '';
+    compartes.forEach(c => {
+      const fields = ['bov_ad','bov_jov','equid','ovinos','caprinos','suinos'];
+      const tds = fields.map(k =>
+        `<td><input type="number" min="0" value="${c[k]}" oninput="updateComparte(${c.id},'${k}',this.value)" /></td>`
+      ).join('');
+      tbody.innerHTML += `
+        <tr>
+          <td><input type="text" style="min-width:120px" value="${c.nome}" placeholder="Nome" oninput="updateComparte(${c.id},'nome',this.value)" /></td>
+          ${tds}
+          <td class="cn-cell" id="cn-${c.id}">${calcCN(c).toFixed(2)}</td>
+          <td><button class="btn-remove" onclick="removeComparte(${c.id})">✕</button></td>
+        </tr>`;
+    });
+  }
+
+  function calcular() {
+    const area = parseFloat(document.getElementById('area-total').value);
+    const enc = parseFloat(document.getElementById('enc-max').value);
+    const criterio = document.getElementById('criterio').value;
+    const nomeBaldio = document.getElementById('nome-baldio').value || 'Baldio';
+
+    if (!area || area <= 0) { alert('Introduza a área total do baldio.'); return; }
+    const lista = compartes.map(c => ({ ...c, cn: calcCN(c) })).filter(c => c.cn > 0 || c.nome);
+    if (!lista.length) { alert('Adicione pelo menos um comparte.'); return; }
+
+    const cnTotal = lista.reduce((s, c) => s + c.cn, 0);
+    const capMax = area * enc;
+    let dist = [], excesso = false;
+
+    if (criterio === 'igual') {
+      const ap = area / lista.length;
+      dist = lista.map(c => ({ ...c, area: ap }));
+    } else if (criterio === 'max-cn') {
+      dist = lista.map(c => ({ ...c, area: c.cn > 0 ? Math.min(c.cn / enc, area) : 0 }));
+      const soma = dist.reduce((s, d) => s + d.area, 0);
+      if (soma > area) { excesso = true; const f = area / soma; dist = dist.map(d => ({ ...d, area: d.area * f })); }
+    } else {
+      if (cnTotal === 0) { alert('Nenhum efetivo registado.'); return; }
+      if (cnTotal > capMax) {
+        excesso = true;
+        const f = capMax / cnTotal;
+        dist = lista.map(c => ({ ...c, area: (c.cn * f) / enc }));
+      } else {
+        dist = lista.map(c => ({ ...c, area: (c.cn / cnTotal) * area }));
+      }
+    }
+
+    const areaUsada = dist.reduce((s, d) => s + d.area, 0);
+    const maxArea = Math.max(...dist.map(d => d.area));
+
+    document.getElementById('titulo-resultado').textContent = '✅ Resultado — ' + nomeBaldio;
+    document.getElementById('r-area').textContent = area.toFixed(2) + ' ha';
+    document.getElementById('r-cn').textContent = cnTotal.toFixed(2);
+    document.getElementById('r-dist').textContent = areaUsada.toFixed(2) + ' ha';
+    document.getElementById('alerta-excesso').style.display = excesso ? 'block' : 'none';
+
+    const tbody = document.getElementById('tbody-resultado');
+    tbody.innerHTML = '';
+    dist.forEach((d, i) => {
+      const cnHa = d.area > 0 ? (d.cn / d.area).toFixed(3) : '—';
+      const pct = maxArea > 0 ? (d.area / maxArea) * 100 : 0;
+      const pctTotal = ((d.area / area) * 100).toFixed(1);
+      tbody.innerHTML += `
+        <tr>
+          <td style="color:#aaa;font-size:0.8rem">${i+1}</td>
+          <td><strong>${d.nome || 'Comparte ' + d.id}</strong></td>
+          <td>${d.cn.toFixed(2)}</td>
+          <td style="font-weight:700;color:#2d5a27">${d.area.toFixed(4)}</td>
+          <td style="color:#555">${cnHa}</td>
+          <td><div class="bar-wrap"><div class="bar" style="width:${Math.max(pct*1.2,4)}px"></div><span class="bar-pct">${pctTotal}%</span></div></td>
+        </tr>`;
+    });
+
+    document.getElementById('ecrã-intro').style.display = 'none';
+    document.getElementById('ecrã-resultado').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  function voltar() {
+    document.getElementById('ecrã-resultado').style.display = 'none';
+    document.getElementById('ecrã-intro').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  // Iniciar com 2 compartes
+  addComparte();
+  addComparte();
+</script>
+</body>
+</html>
